@@ -3,6 +3,7 @@ using Business.BusinessAspects.Autofac;
 using Business.CCS;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Cashing;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Business;
@@ -30,6 +31,8 @@ namespace Business.Concrete
             _categoryService = categoryService;
         }
 
+
+        [CacheAspect]   //key, value
         public IDataResult<List<Product>> GetAll()
         {
             //İş kodları
@@ -57,11 +60,15 @@ namespace Business.Concrete
             return new SuccessDataResult<List<ProductDetailDto>>(_productDal.GetProductDetails());
         }
 
+
+        [CacheAspect]
         public IDataResult<Product> GetById(int productId)
         {
             return new SuccessDataResult<Product>(_productDal.Get(p => p.ProductId == productId));
         }
 
+
+        [CacheRemoveAspect("IProductService.Get")]
         [SecuredOperation("product.add, admin")]        //-> claim = içine yazdığımız parametreler
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
@@ -80,10 +87,11 @@ namespace Business.Concrete
 
             return new SuccessResult(Messages.ProductAdded);
 
-
         }
 
+
         [ValidationAspect(typeof(ProductValidator))]
+        [CacheRemoveAspect("IProductService.Get")]
         public IResult Update(Product product)
         {
             var result = _productDal.GetAll(p => p.CategoryId == product.CategoryId).Count;
@@ -115,7 +123,7 @@ namespace Business.Concrete
             }
             return new SuccessResult();
         }
-
+      
         private IResult CheckIfCategoryLimitExceded()
         {
             var result = _categoryService.GetAll();
@@ -124,6 +132,12 @@ namespace Business.Concrete
                 return new ErrorResult(Messages.CategoryLimitExceded);
             }
             return new SuccessResult();
+        }
+
+        [TransactionScopeAspect]
+        public IResult AddTransactionalTest(Product product)
+        {
+            
         }
     }
 }
