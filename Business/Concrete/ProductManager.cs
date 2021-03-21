@@ -4,6 +4,7 @@ using Business.CCS;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Cashing;
+using Core.Aspects.Autofac.Transaction;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Business;
@@ -69,7 +70,7 @@ namespace Business.Concrete
 
 
         [CacheRemoveAspect("IProductService.Get")]
-        [SecuredOperation("product.add, admin")]        //-> claim = içine yazdığımız parametreler
+        //[SecuredOperation("product.add, admin")]        //-> claim = içine yazdığımız parametreler
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
@@ -137,7 +138,9 @@ namespace Business.Concrete
         [TransactionScopeAspect]
         public IResult AddTransactionalTest(Product product)
         {
-            
+            _productDal.Update(product);
+            _productDal.Add(product);
+            return new SuccessResult(Messages.ProductUpdated);
         }
     }
 }
